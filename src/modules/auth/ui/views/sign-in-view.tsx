@@ -16,11 +16,11 @@ import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { loginSchema } from "../../schemas";
+import { api } from "@/lib/api-client";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -29,21 +29,18 @@ const poppins = Poppins({
 
 export const SignInView = () => {
   const router = useRouter();
-
-  const trpc = useTRPC();
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   
-  const login = useMutation(
-    trpc.auth.login.mutationOptions({
-      onError: (error) => {
-        toast.error(error.message);
-      },
-      onSuccess: async() => {
-        await queryClient.invalidateQueries(trpc.auth.session.queryFilter())
-        router.push("/");
-      },
-    })
-  );
+  const login = useMutation({
+    mutationFn: api.auth.login,
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'session'] });
+      router.push("/");
+    },
+  });
 
   const form = useForm<z.infer<typeof loginSchema>>({
     mode: "all",

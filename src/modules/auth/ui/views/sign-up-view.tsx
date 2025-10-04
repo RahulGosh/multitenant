@@ -18,10 +18,10 @@ import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api-client";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -30,22 +30,18 @@ const poppins = Poppins({
 
 export const SignUpView = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const trpc = useTRPC();
-  const queryClient = useQueryClient()
-
-  const register = useMutation(
-    trpc.auth.register.mutationOptions({
-      onError: (error) => {
-        toast.error(error.message);
-      },
-      onSuccess: async() => {
-                await queryClient.invalidateQueries(trpc.auth.session.queryFilter())
-
-        router.push("/");
-      },
-    })
-  );
+  const register = useMutation({
+    mutationFn: api.auth.register,
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'session'] });
+      router.push("/");
+    },
+  });
 
   const form = useForm<z.infer<typeof registerSchema>>({
     mode: "all",
@@ -104,17 +100,16 @@ export const SignUpView = () => {
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
-                  <FormDescription
-                    className={cn("hidden", showPreview && "block mt-2")}
-                  >
-                    Your store will be available at&nbsp;
-                    <strong>{username}</strong>.shop.com
-                  </FormDescription>
+                  {showPreview && (
+                    <FormDescription>
+                      Your store will be at{" "}
+                      <span className="font-semibold">/tenants/{username}</span>
+                    </FormDescription>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <FormField
               name="email"
               render={({ field }) => (
@@ -150,7 +145,7 @@ export const SignUpView = () => {
               variant="elevated"
               className="bg-black text-white hover:bg-pink-400 hover:text-primary"
             >
-              Create account
+              Sign Up
             </Button>
           </form>
         </Form>
