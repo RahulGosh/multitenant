@@ -22,26 +22,29 @@ const CheckoutView = ({ tenantSlug }: CheckoutViewProps) => {
   const { productIds, clearAllCarts, removeproduct, clearCart } = useCart(tenantSlug);
   const queryClient = useQueryClient();
 
-  const { data, error, isLoading } = useCheckoutProducts(productIds);
+  const { data: products, error, isLoading } = useCheckoutProducts(productIds);
 
   const purchase = usePurchase({
     onMutate: () => {
-      setStates({success: false, cancel: false})
+      setStates({ success: false, cancel: false })
     },
     onSuccess: (data) => {
       window.location.href = data.url
     },
     onError: (error: any) => {
-      if(error.statusCode === 401) {
+      if (error.statusCode === 401) {
         router.push("/sign-in")
       }
       toast.error(error.message)
     },
   });
 
+  // ✅ compute total price
+  const totalPrice = products?.reduce((sum: number, product: any) => sum + (product.price || 0), 0) || 0;
+
   useEffect(() => {
-    if(states.success) {
-      setStates({success: false, cancel: false})
+    if (states.success) {
+      setStates({ success: false, cancel: false })
       clearCart();
       queryClient.invalidateQueries({ queryKey: ['library', 'infinite'] })
       router.push("/library")
@@ -65,26 +68,26 @@ const CheckoutView = ({ tenantSlug }: CheckoutViewProps) => {
     );
   }
 
- if (data?.totalDocs === 0) {
-  return (
-    <div className="lg:pt-16 pt-4 px-4 lg:px-12">
-      <div className="border border-black border-dashed flex items-center justify-center p-8 flex-col gap-y-4 bg-white w-full rounded-lg">
-        <InboxIcon className="w-8 h-8 text-muted-foreground" />
-        <p className="text-base font-medium">No products found</p>
+  if (!products || products.length === 0) {
+    return (
+      <div className="lg:pt-16 pt-4 px-4 lg:px-12">
+        <div className="border border-black border-dashed flex items-center justify-center p-8 flex-col gap-y-4 bg-white w-full rounded-lg">
+          <InboxIcon className="w-8 h-8 text-muted-foreground" />
+          <p className="text-base font-medium">No products found</p>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   return (
     <div className="lg:pt-16 pt-4 px-4 lg:px-12">
       <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 lg:gap-16">
         <div className="lg:col-span-4">
           <div className="border rounded-md overflow-hidden bg-white">
-            {data?.docs.map((product: any, index: number) => (
+            {products.map((product: any, index: number) => (
               <CheckoutItem
                 key={product.id}
-                isLast={index === data.docs.length - 1}
+                isLast={index === products.length - 1}
                 imageUrl={product.image?.url}
                 name={product.name}
                 productUrl={`${generateTenantUrl(product.tenant.slug)}/products/${product.id}`}
@@ -96,14 +99,13 @@ const CheckoutView = ({ tenantSlug }: CheckoutViewProps) => {
             ))}
           </div>
         </div>
-
         <div className="lg:col-span-3">
           <CheckoutSidebar
-            total={data?.totalPrice || 0}
+            total={totalPrice}
             onPurchase={() => purchase.mutate({ tenantSlug, productIds })}
             isCanceled={states.cancel}
             disabled={purchase.isPending}
-          />{" "}
+          />
         </div>
       </div>
     </div>

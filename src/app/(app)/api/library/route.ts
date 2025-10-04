@@ -1,5 +1,5 @@
 import { getPayloadClient, getSession, ApiError, createErrorResponse } from "@/lib/api";
-import { Media, Tenant } from "@/payload-types";
+import { Media, Order, Product, Tenant } from "@/payload-types";
 import { DEFAULT_LIMIT } from "@/constants";
 
 export async function GET(request: Request) {
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
       },
     });
 
-    const productIds = ordersData.docs.map((order) => order.product);
+    const productIds = ordersData.docs.map((order: Order) => order.product);
 
     const productsData = await payload.find({
       collection: "products",
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     });
 
     const dataWithSummarizedReviews = await Promise.all(
-      productsData.docs.map(async (doc) => {
+      productsData.docs.map(async (doc: Product) => {
         const reviewsData = await payload.find({
           collection: "reviews",
           pagination: false,
