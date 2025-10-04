@@ -1,7 +1,6 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { DEFAULT_LIMIT } from "@/constants";
-import { useTRPC } from "@/trpc/client";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteTags } from "@/lib/hooks/use-api";
 import { LoaderIcon } from "lucide-react";
 import React from "react";
 
@@ -11,20 +10,10 @@ interface TagsFilterProps {
 }
 
 const TagsFilter = ({ value, onChange }: TagsFilterProps) => {
-  const trpc = useTRPC();
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery(
-      trpc.tags.getMany.infiniteQueryOptions(
-        {
-          limit: DEFAULT_LIMIT,
-        },
-        {
-          getNextPageParam: (lastPage) => {
-            return lastPage.docs.length > 0 ? lastPage.nextPage : undefined;
-          },
-        }
-      )
-    );
+    useInfiniteTags({
+      limit: DEFAULT_LIMIT,
+    });
 
   const onClick = (tag: string) => {
     if(value?.includes(tag)) {
@@ -41,8 +30,8 @@ const TagsFilter = ({ value, onChange }: TagsFilterProps) => {
           <LoaderIcon className="size-4 animate-spin" />
         </div>
       ) : (
-        data?.pages.map((page) =>
-          page.docs.map((tag) => (
+        data?.pages.map((page: any) =>
+          page.docs.map((tag: any) => (
             <div
               key={tag.id}
               className="flex items-center justify-between cursor-pointer"

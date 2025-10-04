@@ -1,7 +1,6 @@
 "use client";
 
-import { useTRPC } from "@/trpc/client";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useTenant } from "@/lib/hooks/use-api";
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
@@ -30,8 +29,9 @@ interface Props {
 }
 
 const Navbar = ({ slug }: Props) => {
-  const trpc = useTRPC();
-  const { data } = useSuspenseQuery(trpc.tenants.getOne.queryOptions({ slug }));
+  const { data } = useTenant(slug);
+
+  if (!data) return <NavbarSkeleton />;
 
   return (
     <nav className="h-20 border-b font-medium bg-white">

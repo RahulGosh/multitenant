@@ -12,14 +12,14 @@ export function useSession(options?: UseQueryOptions<any>) {
   });
 }
 
-export function useCategories() {
+export function useCategories(): any {
   return useQuery({
     queryKey: ['categories'],
     queryFn: api.categories.getMany,
   });
 }
 
-export function useProduct(id: string, enabled = true) {
+export function useProduct(id: string, enabled = true): any {
   return useQuery({
     queryKey: ['products', id],
     queryFn: () => api.products.getOne(id),
@@ -47,7 +47,7 @@ export function useProducts(params?: Record<string, any>) {
   });
 }
 
-export function useInfiniteProducts(params?: Record<string, any>) {
+export function useInfiniteProducts(params?: Record<string, any>): any {
   return useInfiniteQuery({
     queryKey: ['products', 'infinite', params],
     queryFn: ({ pageParam = 1 }) => {
@@ -72,7 +72,7 @@ export function useInfiniteProducts(params?: Record<string, any>) {
   });
 }
 
-export function useTenant(slug: string, enabled = true) {
+export function useTenant(slug: string, enabled = true): any {
   return useQuery({
     queryKey: ['tenants', slug],
     queryFn: () => api.tenants.getOne(slug),
@@ -80,7 +80,7 @@ export function useTenant(slug: string, enabled = true) {
   });
 }
 
-export function useLibraryProduct(productId: string, enabled = true) {
+export function useLibraryProduct(productId: string, enabled = true): any {
   return useQuery({
     queryKey: ['library', productId],
     queryFn: () => api.library.getOne(productId),
@@ -88,7 +88,7 @@ export function useLibraryProduct(productId: string, enabled = true) {
   });
 }
 
-export function useInfiniteLibrary() {
+export function useInfiniteLibrary(): any {
   return useInfiniteQuery({
     queryKey: ['library', 'infinite'],
     queryFn: ({ pageParam = 1 }) => {
@@ -103,7 +103,7 @@ export function useInfiniteLibrary() {
   });
 }
 
-export function useReview(productId: string, enabled = true) {
+export function useReview(productId: string, enabled = true): any {
   return useQuery({
     queryKey: ['reviews', productId],
     queryFn: () => api.reviews.getOne(productId),
@@ -111,7 +111,7 @@ export function useReview(productId: string, enabled = true) {
   });
 }
 
-export function useCheckoutProducts(productIds: string[], enabled = true) {
+export function useCheckoutProducts(productIds: string[], enabled = true): any {
   return useQuery({
     queryKey: ['checkout', 'products', productIds],
     queryFn: () => api.checkout.getProducts(productIds),
@@ -147,5 +147,22 @@ export function usePurchase(options?: UseMutationOptions<any, any, any>) {
   return useMutation({
     mutationFn: api.checkout.purchase,
     ...options,
+  });
+}
+
+export function useInfiniteTags(params?: Record<string, any>): any {
+  return useInfiniteQuery({
+    queryKey: ['tags', 'infinite', params],
+    queryFn: ({ pageParam = 1 }) => {
+      const searchParams = new URLSearchParams();
+      searchParams.set('cursor', String(pageParam));
+      if (params?.limit) {
+        searchParams.set('limit', String(params.limit));
+      }
+      return api.tags.getMany(searchParams);
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: any) => 
+      lastPage.hasNextPage ? lastPage.nextPage : undefined,
   });
 }

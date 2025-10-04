@@ -11,9 +11,8 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { ReviewsGetOneOutput } from "@/modules/reviews/types";
-import { useTRPC } from "@/trpc/client";
+import { useCreateReview, useUpdateReview } from "@/lib/hooks/use-api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -32,31 +31,23 @@ const formSchema = z.object({
 const ReviewForm = ({ productId, initialData }: ReviewFormProps) => {
   const [isPreview, setIsPreview] = useState(!!initialData);
 
-  const trpc = useTRPC()
-  const queryClient = useQueryClient()
-  const createReview = useMutation(trpc.reviews.create.mutationOptions({
+  const createReview = useCreateReview({
     onSuccess: () => {
-      queryClient.invalidateQueries(trpc.reviews.getOne.queryOptions({
-        productId
-      }))
       setIsPreview(true)
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(error.message)
     }
-  }))
+  })
 
-  const updateReview = useMutation(trpc.reviews.update.mutationOptions({
+  const updateReview = useUpdateReview({
      onSuccess: () => {
-      queryClient.invalidateQueries(trpc.reviews.getOne.queryOptions({
-        productId
-      }))
       setIsPreview(true)
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(error.message)
     }
-  }))
+  })
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

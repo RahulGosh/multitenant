@@ -3,22 +3,20 @@
 import React from "react";
 import SearchInput from "./search-input";
 import Categories from "./categories";
-import { useTRPC } from "@/trpc/client";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useCategories } from "@/lib/hooks/use-api";
 import { useParams } from "next/navigation";
 import { DEFAULT_BG_COLOR } from "@/modules/home/constants";
 import BreadcrumbsNavigation from "./breadcrumbs-navigation";
 
 const SearchFilters = () => {
-  const trpc = useTRPC();
-  const { data } = useSuspenseQuery(trpc.categories.getMany.queryOptions());
+  const { data } = useCategories();
 
   const params = useParams();
   const categoryParam = params.category as string | undefined;
   const activeCategory = categoryParam || "all";
 
-  const activeCategoryData = data.find(
-    (category) => category.slug === activeCategory
+  const activeCategoryData = data?.find(
+    (category: any) => category.slug === activeCategory
   );
   const activeCategoryColor = activeCategoryData?.color || DEFAULT_BG_COLOR;
   const activeCategoryName = activeCategoryData?.name || null;
@@ -26,7 +24,7 @@ const SearchFilters = () => {
   const activeSubcategory = params.subcategory as string | undefined;
   const activeSubcategoryName =
     activeCategoryData?.subcategories?.find(
-      (subcategory) => subcategory.slug === activeSubcategory
+      (subcategory: any) => subcategory.slug === activeSubcategory
     )?.name || null;
 
   return (
@@ -38,7 +36,7 @@ const SearchFilters = () => {
     >
       <SearchInput />
       <div className="hidden lg:block">
-        <Categories data={data} />
+        <Categories data={data || []} />
       </div>
       <BreadcrumbsNavigation
         activeCategory={activeCategory}

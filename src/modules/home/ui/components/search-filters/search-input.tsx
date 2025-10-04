@@ -5,8 +5,7 @@ import { BookmarkCheckIcon, ListFilterIcon, SearchIcon } from "lucide-react";
 import React, { useState } from "react";
 import CategoriesSidebar from "./categoriesSidebar";
 import { Button } from "@/components/ui/button";
-import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useSession } from "@/lib/hooks/use-api";
 import Link from "next/link";
 
 interface Props {
@@ -15,9 +14,8 @@ interface Props {
 
 const SearchInput = ({ disabled }: Props) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const session = useSession();
 
-  const trpc = useTRPC();
-  const session = useQuery(trpc.auth.session.queryOptions());
   return (
     <div className="flex items-center gap-2 w-full">
       <CategoriesSidebar open={isSidebarOpen} onOpenChange={setIsSidebarOpen} />

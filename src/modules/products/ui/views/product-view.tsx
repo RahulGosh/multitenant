@@ -5,8 +5,7 @@ import StarRatings from "@/components/star-rating";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { formatCurrency, generateTenantUrl } from "@/lib/utils";
-import { useTRPC } from "@/trpc/client";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useProduct } from "@/lib/hooks/use-api";
 import { CheckCheckIcon, LinkIcon, StarIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,12 +30,11 @@ interface ProductViewProps {
 }
 
 const ProductView = ({ productId, tenantSlug }: ProductViewProps) => {
-  const trpc = useTRPC();
-  const { data } = useSuspenseQuery(
-    trpc.products.getOne.queryOptions({ id: productId })
-  );
-
+  const { data } = useProduct(productId);
   const [isCopied, setIsCopied] = useState(false);
+
+  if (!data) return null;
+
   return (
     <div className="px-4 lg:px-12 py-10">
       <div className="border rounded-sm bg-white overflow-hidden">

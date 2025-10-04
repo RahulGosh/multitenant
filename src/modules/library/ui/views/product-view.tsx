@@ -3,8 +3,7 @@
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import React from "react";
-import { useTRPC } from "@/trpc/client";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useLibraryProduct } from "@/lib/hooks/use-api";
 import ReviewSidebar from "../components/review-sidebar";
 
 interface Props {
@@ -12,12 +11,10 @@ interface Props {
 }
 
 const ProductView = ({ productId }: Props) => {
-  const trpc = useTRPC();
-  const { data } = useSuspenseQuery(
-    trpc.library.getOne.queryOptions({
-      productId,
-    })
-  );
+  const { data } = useLibraryProduct(productId);
+
+  if (!data) return null;
+
   return (
     <div className="min-h-screen bg-white">
       <nav className="p-4 bg-[#F4F4F0] w-full border-b">

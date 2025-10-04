@@ -2,8 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useCart } from "../../hooks/use-cart";
-import { useTRPC } from "@/trpc/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCheckoutProducts, usePurchase } from "@/lib/hooks/use-api";
 import { toast } from "sonner";
 import { generateTenantUrl } from "@/lib/utils";
 import CheckoutItem from "../components/checkout-item";
@@ -11,6 +10,7 @@ import CheckoutSidebar from "../components/checkout-sidebar";
 import { InboxIcon, LoaderIcon } from "lucide-react";
 import { useCheckoutStates } from "../../hooks/use-checkout-states";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CheckoutViewProps {
   tenantSlug: string;
@@ -20,42 +20,36 @@ const CheckoutView = ({ tenantSlug }: CheckoutViewProps) => {
   const router = useRouter()
   const [states, setStates] = useCheckoutStates()
   const { productIds, clearAllCarts, removeproduct, clearCart } = useCart(tenantSlug);
+  const queryClient = useQueryClient();
 
-  const trpc = useTRPC();
-  const queryClient = useQueryClient()
-  const { data, error, isLoading } = useQuery(
-    trpc.checkout.getProducts.queryOptions({
-      ids: productIds,
-    })
-  );
+  const { data, error, isLoading } = useCheckoutProducts(productIds);
 
-  const purchase = useMutation(trpc.checkout.purchase.mutationOptions({
+  const purchase = usePurchase({
     onMutate: () => {
       setStates({success: false, cancel: false})
     },
     onSuccess: (data) => {
       window.location.href = data.url
     },
-    onError: (error) => {
-      if(error.data?.code === "UNAUTHORIZED") {
+    onError: (error: any) => {
+      if(error.statusCode === 401) {
         router.push("/sign-in")
       }
       toast.error(error.message)
     },
-  }));
+  });
 
   useEffect(() => {
     if(states.success) {
       setStates({success: false, cancel: false})
       clearCart();
-      queryClient.invalidateQueries(trpc.library.getMany.infiniteQueryFilter())
+      queryClient.invalidateQueries({ queryKey: ['library', 'infinite'] })
       router.push("/library")
     }
-  }, [states.success, clearCart, router, setStates, queryClient, trpc.library.getMany])
-  
+  }, [states.success, clearCart, router, setStates, queryClient])
 
   useEffect(() => {
-    if (error?.data?.code === "NOT_FOUND") {
+    if (error && (error as any)?.statusCode === 404) {
       clearAllCarts();
       toast.warning("Invalid products found, cart cleared");
     }
@@ -87,7 +81,7 @@ const CheckoutView = ({ tenantSlug }: CheckoutViewProps) => {
       <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 lg:gap-16">
         <div className="lg:col-span-4">
           <div className="border rounded-md overflow-hidden bg-white">
-            {data?.docs.map((product, index) => (
+            {data?.docs.map((product: any, index: number) => (
               <CheckoutItem
                 key={product.id}
                 isLast={index === data.docs.length - 1}

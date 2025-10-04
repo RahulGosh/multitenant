@@ -1,6 +1,5 @@
 import React from 'react'
-import { useTRPC } from '@/trpc/client';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useReview } from '@/lib/hooks/use-api';
 import ReviewForm from './review-form';
 
 interface Props {
@@ -8,8 +7,7 @@ interface Props {
 }
 
 const ReviewSidebar = ({productId}: Props) => {
-    const trpc = useTRPC()
-    const {data} = useSuspenseQuery(trpc.reviews.getOne.queryOptions({ productId }));
+    const {data} = useReview(productId);
 
   return (
     <ReviewForm productId={productId} initialData={data} />

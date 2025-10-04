@@ -1,7 +1,6 @@
 "use client";
 
-import { useTRPC } from "@/trpc/client";
-import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteLibrary } from "@/lib/hooks/use-api";
 import React from "react";
 import { DEFAULT_LIMIT } from "@/constants";
 import { Button } from "@/components/ui/button";
@@ -10,22 +9,10 @@ import { cn } from "@/lib/utils";
 import ProductCard, { ProductCardSkeleton } from "./product-card";
 
 const ProductList = () => {
-  const trpc = useTRPC();
-
   const { data, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useSuspenseInfiniteQuery(
-      trpc.library.getMany.infiniteQueryOptions(
-        {
-          limit: DEFAULT_LIMIT,
-        },
-        {
-          getNextPageParam: (lastPage) =>
-            lastPage.docs.length > 0 ? lastPage.nextPage : undefined,
-        }
-      )
-    );
+    useInfiniteLibrary();
 
-  if (data.pages?.[0]?.docs.length === 0) {
+  if (data?.pages?.[0]?.docs.length === 0) {
     return (
       <div className="border border-black border-dashed flex items-center justify-center p-8 flex-col gap-y-4 bg-white w-full rounded-lg">
         <InboxIcon />
@@ -41,8 +28,8 @@ const ProductList = () => {
           "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4"
         )}
       >
-        {data?.pages.flatMap((page) =>
-          page.docs.map((product) => (
+        {data?.pages.flatMap((page: any) =>
+          page.docs.map((product: any) => (
             <ProductCard
               key={product.id}
               id={product.id}
