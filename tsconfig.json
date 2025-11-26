@@ -1,0 +1,52 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+
+    // ✅ Speed + safety
+    "skipLibCheck": true, // faster builds, skip checking .d.ts files
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+
+    // ✅ Module setup (Next.js friendly)
+    "allowJs": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+
+    // ✅ Faster rebuilds
+    "incremental": true,
+
+    // ✅ Next.js plugin
+    "plugins": [
+      { "name": "next" }
+    ],
+
+    // ✅ Path aliases
+    "paths": {
+      "@/*": ["./src/*"],
+      "@payload-config": ["./src/payload.config.ts"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".next",         // prevent TS from indexing generated types
+    ".turbo",        // turbo cache
+    "**/*.spec.ts",  // test files
+    "**/*.test.tsx", // react test files
+    "**/__tests__/**",
+    "**/*.stories.tsx" // storybook (if you use it)
+  ]
+}
