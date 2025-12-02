@@ -9,7 +9,11 @@ import { InboxIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ProductCard, { ProductCardSkeleton } from "./product-card";
 
-const ProductList = () => {
+interface ProductListProps {
+  productId?: string;  // ✅ added
+}
+
+const ProductList = ({ productId }: ProductListProps) => {
   const trpc = useTRPC();
 
   const { data, hasNextPage, isFetchingNextPage, fetchNextPage } =
@@ -17,6 +21,7 @@ const ProductList = () => {
       trpc.library.getMany.infiniteQueryOptions(
         {
           limit: DEFAULT_LIMIT,
+          productId, // ⚡ optional — only include if backend supports it
         },
         {
           getNextPageParam: (lastPage) =>
@@ -57,6 +62,7 @@ const ProductList = () => {
           ))
         )}
       </div>
+
       <div className="flex justify-center pt-8">
         {hasNextPage && (
           <Button

@@ -13,6 +13,8 @@ interface Props {
   searchParams: Promise<SearchParams>;
 }
 
+export const dynamic = "force-dynamic";
+
 const CategoryPage = async ({ params, searchParams }: Props) => {
   const { category } = await params;
   const filters = await loadProductFilters(searchParams);
@@ -22,7 +24,7 @@ const CategoryPage = async ({ params, searchParams }: Props) => {
     trpc.products.getMany.infiniteQueryOptions({
       category,
       ...filters,
-      limit: DEFAULT_LIMIT
+      limit: DEFAULT_LIMIT,
     })
   );
 

@@ -26,8 +26,20 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    components: {
+      beforeNavLinks: ["@/components/stripe-verify#StripeVerify"],
+    },
   },
-  collections: [Users, Media, Categories, Products, Tags, Tenants, Orders, Reviews],
+  collections: [
+    Users,
+    Media,
+    Categories,
+    Products,
+    Tags,
+    Tenants,
+    Orders,
+    Reviews,
+  ],
   cookiePrefix: "funroad",
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "",
@@ -47,7 +59,8 @@ export default buildConfig({
       tenantsArrayField: {
         includeDefaultField: false,
       },
-      userHasAccessToAllTenants: (user) => isSuperAdmin(user)}),
+      userHasAccessToAllTenants: (user) => isSuperAdmin(user),
+    }),
     // storage-adapter-placeholder
   ],
 });

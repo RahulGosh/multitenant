@@ -9,8 +9,60 @@ import { TRPCError } from "@trpc/server";
 import Stripe from "stripe";
 import { ChecckoutMetadata, ProductMetadata } from "../types";
 import { stripe } from "@/lib/stripe";
+import { PLATFORM_FEE_PERCENTAGE } from "@/constants";
+import { generateTenantUrl } from "@/lib/utils";
 
 export const checkoutRouter = createTRPCRouter({
+  verify: protectedProcedure.mutation(async ({ ctx }) => {
+    const user = await ctx.db.findByID({
+      collection: "users",
+      id: ctx.session.user.id,
+      depth: 0,
+    });
+
+    if (!user) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    const tenantId = user.tenants?.[0]?.tenant as string;
+    const tenant = await ctx.db.findByID({
+      collection: "tenants",
+      id: tenantId,
+    });
+
+    if (!tenant) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Tenant not found",
+      });
+    }
+
+    // if (!tenant.stripeDetailsSubmitted) {
+    //   throw new TRPCError({
+    //     code: "NOT_FOUND",
+    //     message: "Tenant not allowed to sell products",
+    //   });
+    // }
+
+    const accountLink = await stripe.accountLinks.create({
+      account: tenant.stripeAccountId,
+      refresh_url: `${process.env.NEXT_PUBLIC_APP_URL!}/admin`,
+      return_url: `${process.env.NEXT_PUBLIC_APP_URL!}/admin`,
+      type: "account_onboarding",
+    });
+
+    if (!accountLink.url) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Failed to create verification link",
+      });
+    }
+
+    return { url: accountLink.url };
+  }),
   purchase: protectedProcedure
     .input(
       z.object({
@@ -32,6 +84,11 @@ export const checkoutRouter = createTRPCRouter({
             {
               "tenant.slug": {
                 equals: input.tenantSlug,
+              },
+            },
+            {
+              isArchived: {
+                not_equals: true,
               },
             },
           ],
@@ -83,21 +140,40 @@ export const checkoutRouter = createTRPCRouter({
           },
         }));
 
-      const checkout = await stripe.checkout.sessions.create({
-        customer_email: ctx.session.user.email,
-        mode: "payment",
-        payment_method_types: ["card"],
-        line_items: lineItems,
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/tenants/${input.tenantSlug}/checkout?success=true`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/tenants/${input.tenantSlug}/checkout?cancel=true`,
-        invoice_creation: {
-          enabled: true,
+      const totalAmount = products.docs.reduce(
+        (acc, item) => acc + item.price * 100,
+        0
+      );
+
+      const platformFeeAmount = Math.round(
+        totalAmount * (PLATFORM_FEE_PERCENTAGE / 100)
+      );
+
+      const domain = generateTenantUrl(input.tenantSlug)
+
+      const checkout = await stripe.checkout.sessions.create(
+        {
+          customer_email: ctx.session.user.email,
+          mode: "payment",
+          payment_method_types: ["card"],
+          line_items: lineItems,
+          success_url: `${domain}/checkout?success=true`,
+          cancel_url: `${domain}/checkout?cancel=true`,
+          invoice_creation: {
+            enabled: true,
+          },
+          metadata: {
+            tenantId: tenant.id,
+            userId: ctx.session.user.id,
+          } as ChecckoutMetadata,
+          payment_intent_data: {
+            application_fee_amount: platformFeeAmount,
+          },
         },
-        metadata: {
-          tenantId: tenant.id,
-          userId: ctx.session.user.id,
-        } as ChecckoutMetadata,
-      });
+        {
+          stripeAccount: tenant.stripeAccountId,
+        }
+      );
 
       if (!checkout.url) {
         throw new TRPCError({
@@ -120,9 +196,18 @@ export const checkoutRouter = createTRPCRouter({
         collection: "products",
         depth: 2,
         where: {
-          id: {
-            in: input.ids,
-          },
+          and: [
+            {
+              id: {
+                in: input.ids,
+              },
+            },
+            {
+              isArchived: {
+                not_equals: true,
+              },
+            },
+          ],
         },
       });
 

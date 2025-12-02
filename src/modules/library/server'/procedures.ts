@@ -60,6 +60,7 @@ export const libraryRouter = createTRPCRouter({
       z.object({
         cursor: z.number().default(1),
         limit: z.number().default(DEFAULT_LIMIT),
+              productId: z.string().nullable().optional(),
       })
     )
     .query(async ({ ctx, input }) => {

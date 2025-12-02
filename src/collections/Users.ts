@@ -25,7 +25,7 @@ export const Users: CollectionConfig = {
     create: ({req}) => isSuperAdmin(req.user),
     delete: ({req}) => isSuperAdmin(req.user),
     update: ({req, id}) => {
-      if(isSuperAdmin) return true
+      if(isSuperAdmin(req.user)) return true
 
       return req.user?.id === id
     }

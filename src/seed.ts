@@ -1,5 +1,5 @@
 import { getPayload } from "payload";
-import config from "@payload-config"
+import config from "@payload-config";
 
 const categories = [
   {
@@ -135,7 +135,7 @@ const categories = [
       { name: "Macro", slug: "macro" },
     ],
   },
-]
+];
 
 const seed = async () => {
   const payload = await getPayload({ config });
@@ -156,19 +156,19 @@ const seed = async () => {
       },
     });
 
-   for (const subcategory of category.subcategories || []) {
-  await payload.create({
-    collection: "categories",
-    data: {
-      name: subcategory.name,
-      slug: subcategory.slug,
-      parent: parentCategory.id,
+    for (const subcategory of category.subcategories || []) {
+      await payload.create({
+        collection: "categories",
+        data: {
+          name: subcategory.name,
+          slug: subcategory.slug,
+          parent: parentCategory.id,
+        },
+      });
     }
-  })
-}
   }
 };
 
-await seed()
+await seed();
 
-process.exit(0)
+process.exit(0);

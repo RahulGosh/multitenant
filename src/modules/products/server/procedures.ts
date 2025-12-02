@@ -6,6 +6,7 @@ import { CustomCategory } from "@/app/(app)/(home)/types";
 import { Category, Media, Tenant } from "@/payload-types";
 import { sortValues } from "../search-params";
 import { DEFAULT_LIMIT } from "@/constants";
+import { TRPCError } from "@trpc/server";
 
 function mapSort(input?: string | null): Sort {
   switch (input) {
@@ -39,7 +40,17 @@ export const productsRouter = createTRPCRouter({
         collection: "products",
         id: input.id,
         depth: 2,
+        select: {
+          content: false
+        }
       });
+
+      if(product.isArchived) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Product not found"
+        })
+      }
 
       let isPurchased = false;
 
@@ -126,7 +137,11 @@ export const productsRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const where: Where = {};
+      const where: Where = {
+        isArchived: {
+          not_equals: true
+        }
+      };
       const sort: Sort = mapSort(input.sort);
 
       if (input.minPrice || input.maxPrice) {
@@ -141,6 +156,10 @@ export const productsRouter = createTRPCRouter({
 
       if (input.tenantSlug) {
         where["tenant.slug"] = { equals: input.tenantSlug };
+      } else {
+        where["isPrivate"] = {
+          not_equals: true
+        }
       }
 
       if (input.category) {
@@ -198,6 +217,9 @@ export const productsRouter = createTRPCRouter({
         sort,
         page: input.cursor,
         limit: input.limit,
+        select: {
+          content: false
+        }
       });
 
       const dataWithSummarizedReviews = await Promise.all(
