@@ -155,13 +155,13 @@ export const productsRouter = createTRPCRouter({
         }
       }
 
-      if (input.tenantSlug) {
-        where["tenant.slug"] = { equals: input.tenantSlug };
-      } else {
-        where["isPrivate"] = {
-          not_equals: true
-        }
-      }
+      // if (input.tenantSlug) {
+      //   where["tenant.slug"] = { equals: input.tenantSlug };
+      // } else {
+      //   where["isPrivate"] = {
+      //     not_equals: true
+      //   }
+      // }
 
       if (input.category) {
         const categoriesData = await ctx.db.find({
